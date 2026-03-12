@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA SQLite OPFS Demo</title>
+    
+    <!-- 1. 連結 PWA 設定檔 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+        #output { background: #f4f4f4; padding: 10px; border-radius: 5px; min-height: 100px; white-space: pre-wrap; }
+        button { padding: 10px 20px; cursor: pointer; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <h1>SQLite + OPFS 測試 (PWA)</h1>
+    <p>狀態：<span id="status">檢查中...</span></p>
+    
+    <button onclick="saveData()">存入隨機數據</button>
+    <button onclick="readData()">讀取所有數據</button>
+    
+    <h3>輸出日誌：</h3>
+    <pre id="output">等待初始化...</pre>
+
+    <script>
+        // 2. 註冊 Service Worker (實現離線功能)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker 已註冊', reg))
+                    .catch(err => console.error('Service Worker 註冊失敗', err));
+            });
+        }
+
+        // 3. 建立 SQLite Worker
+        const worker = new Worker('worker.js');
+
+        // 接收來自 Worker 的結果
+        worker.onmessage = function(e) {
+            const { type, data } = e.data;
+            const outputEl = document.getElementById('output');
+            const statusEl = document.getElementById('status');
+
+            if (type === 'log') {
+                if (data.includes('已就緒')) {
+                    statusEl.innerText = '✅ 資料庫已連接 (OPFS)';
+                    outputEl.textContent = ''; // 清空初始化文字
+                }
+                outputEl.textContent += `[Log] ${data}\n`;
+            } else if (type === 'result') {
+                outputEl.textContent = '--- 查詢結果 ---\n' + JSON.stringify(data, null, 2);
+            }
+        };
+
+        function saveData() {
+            const val = Math.floor(Math.random() * 100);
+            worker.postMessage({ action: 'insert', value: val });
+        }
+
+        function readData() {
+            worker.postMessage({ action: 'query' });
+        }
+    </script>
+</body>
+</html>
