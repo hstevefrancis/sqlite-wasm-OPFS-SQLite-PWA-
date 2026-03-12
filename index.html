@@ -39,7 +39,7 @@
         }
 
         // 3. 建立 SQLite Worker
-        const worker = new Worker('worker.js');
+        const worker = new Worker('work.js');
 
         // 接收來自 Worker 的結果
         worker.onmessage = function(e) {
