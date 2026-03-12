@@ -39,7 +39,12 @@
         }
 
         // 3. 建立 SQLite Worker
-        const worker = new Worker('worker.js');
+        // 找到這行：const worker = new Worker('worker.js');
+        // 改成這樣：
+        setTimeout(() => {
+            const worker = new Worker('worker.js');
+             // ...原本接收訊息的 worker.onmessage 內容...
+        }, 1000); 
 
         // 接收來自 Worker 的結果
         worker.onmessage = function(e) {
